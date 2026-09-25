@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TorahGPT</title>
+<meta name="description" content="Tiny language models trained from scratch on the Hebrew Torah and the King James Bible, running in your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
+<style>
+  /* Palette: the Tabernacle curtains, Exodus 26:1 — blue, purple, scarlet, and fine linen */
+  :root {
+    --tekhelet-deep: #0E1A3A;   /* background */
+    --tekhelet: #1A2C5B;        /* raised surfaces */
+    --tekhelet-line: #2A3F74;   /* borders */
+    --linen: #EDE9DF;           /* text */
+    --mist: #95A1C3;            /* secondary text */
+    --argaman: #8E3B78;         /* purple accent */
+    --shani: #E0483A;           /* scarlet: cursor, focus */
+    --shani-deep: #B8322A;      /* scarlet: button */
+    --ui: "Frank Ruhl Libre", "Times New Roman", serif;
+    --hebrew: "Frank Ruhl Libre", "David", "Times New Roman", serif;
+    --kjv: "IM Fell English", Garamond, Georgia, serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--tekhelet-deep); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--tekhelet-deep);
+    color: var(--linen);
+    font-family: var(--ui);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+  button, select, textarea, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--shani); outline-offset: 2px; }
+
+  /* Header: name and model switch */
+  .top {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--tekhelet-deep);
+    border-bottom: 1px solid var(--tekhelet-line);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .top-inner {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .brand { font-weight: 700; font-size: 1.3rem; letter-spacing: 0.01em; }
+  .switch {
+    display: flex;
+    border: 1px solid var(--tekhelet-line);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .switch button {
+    border: 0;
+    background: none;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--mist);
+  }
+  .switch button[aria-pressed="true"] { background: var(--argaman); color: var(--linen); }
+  .switch button:disabled { cursor: not-allowed; }
+
+  /* Conversation column */
+  main {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 15rem;
+  }
+  .welcome { padding: 2.5rem 0 1rem; }
+  .welcome[hidden] { display: none; }
+  .initial {
+    font-size: clamp(6.5rem, 22vw, 10rem);
+    line-height: 0.9;
+    color: var(--shani);
+    margin: 0 0 1.25rem;
+  }
+  .initial.hebrew { font-family: var(--hebrew); font-weight: 700; }
+  .initial.kjv { font-family: var(--kjv); }
+  .welcome h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 0.5rem; font-weight: 700; }
+  .welcome p { color: var(--mist); max-width: 34rem; margin: 0 0 1.5rem; }
+  .examples { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .examples button {
+    background: none;
+    border: 1px solid var(--tekhelet-line);
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    cursor: pointer;
+    font-size: 1.05rem;
+  }
+  .examples button:hover { border-color: var(--argaman); }
+  .examples button.hebrew { font-family: var(--hebrew); font-size: 1.2rem; }
+  .examples button.kjv { font-family: var(--kjv); }
+
+  /* Passages: the prompt, dimmed, followed by the model's continuation */
+  .passage { padding: 1.75rem 0; border-top: 1px solid var(--tekhelet-line); }
+  .passage:first-of-type { border-top: 0; }
+  .passage-model { font-size: 0.9rem; color: var(--mist); margin: 0 0 0.6rem; }
+  .passage[dir="rtl"] .passage-model { text-align: right; }
+  .passage-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .passage.hebrew .passage-text { font-family: var(--hebrew); font-size: 1.55rem; line-height: 1.9; }
+  .passage.kjv .passage-text { font-family: var(--kjv); font-size: 1.35rem; line-height: 1.7; }
+  .prompt { color: var(--mist); }
+  .cursor {
+    display: inline-block;
+    width: 0.45em;
+    height: 1em;
+    background: var(--shani);
+    vertical-align: -0.12em;
+    margin-inline-start: 0.08em;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .note { color: var(--mist); font-size: 0.95rem; margin: 0.75rem 0 0; }
+  .about { color: var(--mist); font-size: 0.95rem; margin-top: 3rem; max-width: 36rem; }
+  .about a { color: var(--linen); }
+
+  /* Composer, fixed to the bottom of the screen */
+  .composer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to top, var(--tekhelet-deep) 75%, transparent);
+    padding: 1.5rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .composer form { max-width: 46rem; margin: 0 auto; }
+  .box {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    background: var(--tekhelet);
+    border: 1px solid var(--tekhelet-line);
+    border-radius: 0.9rem;
+    padding: 0.6rem;
+  }
+  .box:focus-within { border-color: var(--argaman); }
+  textarea {
+    flex: 1;
+    resize: none;
+    border: 0;
+    background: none;
+    padding: 0.45rem 0.5rem;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    max-height: 8rem;
+    min-width: 0;
+  }
+  textarea:focus-visible { outline: none; }
+  textarea::placeholder { color: var(--mist); }
+  .go {
+    border: 0;
+    border-radius: 0.6rem;
+    background: var(--shani-deep);
+    color: var(--linen);
+    padding: 0.55rem 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .go:disabled { opacity: 0.5; cursor: not-allowed; }
+  .settings {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.5rem;
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+    color: var(--mist);
+  }
+  .settings label { display: flex; align-items: center; gap: 0.5rem; }
+  .settings input[type="range"] { accent-color: var(--shani); width: 7rem; }
+  .settings select {
+    background: var(--tekhelet);
+    border: 1px solid var(--tekhelet-line);
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.4rem;
+  }
+  .status { min-height: 1.5em; margin-left: auto; }
+
+  @media (max-width: 30rem) {
+    .top-inner { padding: 0.6rem 1rem; }
+    .brand { font-size: 1.15rem; }
+    .switch button { padding: 0.3rem 0.65rem; }
+    .status { margin-left: 0; width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="brand">TorahGPT</span>
+    <div class="switch" role="group" aria-label="Model">
+      <button type="button" data-model="torah" aria-pressed="true">TorahGPT</button>
+      <button type="button" data-model="kjv" aria-pressed="false">KJVGPT</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="welcome" id="welcome">
+    <p class="initial hebrew" id="initial" aria-hidden="true">ב</p>
+    <h1 id="welcome-name">TorahGPT</h1>
+    <p id="welcome-description"></p>
+    <div class="examples" id="examples"></div>
+  </section>
+  <div id="passages"></div>
+  <p class="about">
+    Two tiny transformers, about 800,000 parameters each, trained from scratch on a laptop:
+    TorahGPT on the Hebrew Torah of the Leningrad Codex, KJVGPT on the King James Bible.
+    They run entirely in your browser. Expect scripture-flavoured nonsense.
+    Palette from the Tabernacle curtains, Exodus 26:1.
+    <a href="https://github.com/Kabbalahblah/TorahGPT">Code on GitHub</a>
+  </p>
+</main>
+
+<div class="composer">
+  <form id="composer">
+    <div class="box">
+      <textarea id="prompt" rows="1" dir="auto" aria-label="Start of a passage"></textarea>
+      <button class="go" id="go" type="submit">Continue</button>
+    </div>
+    <div class="settings">
+      <label>Temperature
+        <input type="range" id="temperature" min="0.2" max="1.5" step="0.1" value="0.8">
+        <output id="temperature-value" for="temperature">0.8</output>
+      </label>
+      <label>Length
+        <select id="length">
+          <option value="150">150 characters</option>
+          <option value="300" selected>300 characters</option>
+          <option value="600">600 characters</option>
+        </select>
+      </label>
+      <span class="status" id="status" aria-live="polite"></span>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/ort.wasm.min.js"></script>
+<script>
+ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/";
+ort.env.wasm.numThreads = 1;    // GitHub Pages can't enable multithreaded WebAssembly
+
+const MODELS = {
+  torah: {
+    name: "TorahGPT",
+    initial: "ב",
+    font: "hebrew",
+    dir: "rtl",
+    description: "A tiny language model trained from scratch on the Hebrew Torah, and nothing else. Start a passage in Hebrew and it will carry on.",
+    placeholder: "Start a passage in Hebrew",
+    examples: ["בראשית", "ויאמר משה", "וידבר יהוה אל משה לאמר"],
+    ignored: (chars) => `TorahGPT only knows Hebrew letters, so it ignored: ${chars}`,
+    empty: "TorahGPT only knows Hebrew letters, so it started a new verse instead.",
+  },
+  kjv: {
+    name: "KJVGPT",
+    initial: "I",
+    font: "kjv",
+    dir: "ltr",
+    description: "The same tiny model, trained on the King James Bible. Start a passage and it will carry on.",
+    placeholder: "Start a passage",
+    examples: ["In the beginning", "And the LORD said unto Moses,", "Blessed are the"],
+    ignored: (chars) => `KJVGPT never saw these characters in training, so it ignored: ${chars}`,
+    empty: "KJVGPT didn't recognise any of those characters, so it started a new verse instead.",
+  },
+};
+
+const $ = (id) => document.getElementById(id);
+const loaded = {};              // models already downloaded, by key
+let current = "torah";
+let generating = false;
+let stopRequested = false;
+
+async function loadModel(key) {
+  if (!loaded[key]) {
+    const [session, vocab] = await Promise.all([
+      ort.InferenceSession.create(`models/${key}.onnx`, { executionProviders: ["wasm"] }),
+      fetch(`models/${key}.json`).then((r) => r.json()),
+    ]);
+    loaded[key] = {
+      session,
+      chars: vocab.chars,
+      blockSize: vocab.block_size,
+      stoi: new Map(vocab.chars.map((c, i) => [c, i])),
+    };
+  }
+  return loaded[key];
+}
+
+// Pick the next character at random, weighted by the model's probabilities
+function sample(logits, temperature) {
+  let max = -Infinity;
+  for (const x of logits) max = Math.max(max, x);
+  const weights = Array.from(logits, (x) => Math.exp((x - max) / temperature));
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return weights.length - 1;
+}
+
+// Same substitutions as the data preparation, so typed text matches the training text
+function normalise(text) {
+  return text.replace(/[’‘]/g, "'").replace(/[—–]/g, "-").replace(/æ/g, "ae").replace(/Æ/g, "Ae").replace(/\r/g, "");
+}
+
+function showModel(key) {
+  const m = MODELS[key];
+  current = key;
+  document.querySelectorAll(".switch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.model === key)));
+  $("initial").textContent = m.initial;
+  $("initial").className = `initial ${m.font}`;
+  $("welcome-name").textContent = m.name;
+  $("welcome-description").textContent = m.description;
+  $("prompt").placeholder = m.placeholder;
+  const examples = $("examples");
+  examples.replaceChildren(...m.examples.map((text) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = m.font;
+    b.dir = m.dir;
+    b.textContent = text;
+    b.addEventListener("click", () => { $("prompt").value = text; run(); });
+    return b;
+  }));
+  if (!$("passages").children.length) $("welcome").hidden = false;
+}
+
+function setBusy(busy) {
+  generating = busy;
+  $("go").textContent = busy ? "Stop" : "Continue";
+  document.querySelectorAll(".switch button, .examples button").forEach((b) => { b.disabled = busy; });
+}
+
+async function run() {
+  if (generating) { stopRequested = true; return; }
+  const m = MODELS[current];
+  setBusy(true);
+  stopRequested = false;
+  try {
+    if (!loaded[current]) $("status").textContent = `Loading ${m.name}…`;
+    const model = await loadModel(current);
+
+    const typed = normalise($("prompt").value);
+    const kept = [...typed].filter((c) => model.stoi.has(c)).join("").replace(/ {2,}/g, " ");
+    const ignored = [...new Set([...typed].filter((c) => !model.stoi.has(c) && c.trim()))];
+
+    // Build the passage: the prompt, dimmed, then the continuation as it arrives
+    $("welcome").hidden = true;
+    const article = document.createElement("article");
+    article.className = `passage ${m.font}`;
+    article.dir = m.dir;
+    const label = document.createElement("p");
+    label.className = "passage-model";
+    label.textContent = m.name;
+    const text = document.createElement("p");
+    text.className = "passage-text";
+    const promptSpan = document.createElement("span");
+    promptSpan.className = "prompt";
+    promptSpan.textContent = kept;
+    const output = document.createTextNode("");
+    const cursor = document.createElement("span");
+    cursor.className = "cursor";
+    text.append(promptSpan, output, cursor);
+    article.append(label, text);
+    if (ignored.length || !kept) {
+      const note = document.createElement("p");
+      note.className = "note";
+      note.dir = "ltr";
+      note.textContent = kept ? m.ignored(ignored.join(" ")) : m.empty;
+      article.append(note);
+    }
+    $("passages").append(article);
+    article.scrollIntoView({ block: "end", behavior: "smooth" });
+    $("prompt").value = "";
+    $("status").textContent = "Writing…";
+
+    // Generate one character at a time: predict, sample, append, repeat
+    const ids = kept ? [...kept].map((c) => model.stoi.get(c)) : [model.stoi.get("\n")];
+    const target = Number($("length").value);
+    const temperature = Number($("temperature").value);
+    const V = model.chars.length;
+    for (let n = 0; n < target + 150 && !stopRequested; n++) {
+      const context = ids.slice(-model.blockSize);
+      const input = new ort.Tensor("int64", BigInt64Array.from(context, BigInt), [1, context.length]);
+      const { logits } = await model.session.run({ ids: input });
+      const next = sample(logits.data.subarray((context.length - 1) * V, context.length * V), temperature);
+      ids.push(next);
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 120;
+      output.appendData(model.chars[next]);
+      if (nearBottom) window.scrollTo(0, document.body.scrollHeight);
+      if (n >= target && model.chars[next] === "\n") break;    // finish at the end of a verse
+      await new Promise((resolve) => setTimeout(resolve, 0));  // let the page redraw and notice Stop
+    }
+    cursor.remove();
+    $("status").textContent = "";
+  } catch (err) {
+    console.error(err);
+    $("status").textContent = `Couldn't run ${m.name}. Check your connection, then reload the page.`;
+  } finally {
+    setBusy(false);
+  }
+}
+
+document.querySelectorAll(".switch button").forEach((b) => b.addEventListener("click", () => showModel(b.dataset.model)));
+$("composer").addEventListener("submit", (e) => { e.preventDefault(); run(); });
+$("prompt").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); run(); }
+});
+$("prompt").addEventListener("input", (e) => {
+  e.target.style.height = "auto";
+  e.target.style.height = `${e.target.scrollHeight}px`;
+});
+$("temperature").addEventListener("input", (e) => { $("temperature-value").textContent = Number(e.target.value).toFixed(1); });
+showModel("torah");
+</script>
+</body>
+</html>
