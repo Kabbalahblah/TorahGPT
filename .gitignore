@@ -219,3 +219,7 @@ __marimo__/
 
 *.xml
 torah.txt
+*.pt
+sample.txt
+en_kjv.json
+kjv.txt
