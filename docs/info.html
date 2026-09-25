@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About TorahGPT</title>
+<meta name="description" content="How TorahGPT and KJVGPT work: tiny language models trained from scratch on the Hebrew Torah and the King James Bible.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
+<style>
+  /* Same palette as the main page: the Tabernacle curtains, Exodus 26:1 */
+  :root {
+    --tekhelet-deep: #0E1A3A;
+    --tekhelet-line: #2A3F74;
+    --linen: #EDE9DF;
+    --mist: #95A1C3;
+    --shani: #E0483A;
+    --ui: "Frank Ruhl Libre", "Times New Roman", serif;
+    --hebrew: "Frank Ruhl Libre", "David", "Times New Roman", serif;
+    --kjv: "IM Fell English", Garamond, Georgia, serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--tekhelet-deep); }
+  body {
+    margin: 0;
+    background: var(--tekhelet-deep);
+    color: var(--linen);
+    font-family: var(--ui);
+    font-size: 1.125rem;
+    line-height: 1.65;
+  }
+  a { color: var(--linen); text-underline-offset: 0.15em; }
+  :focus-visible { outline: 2px solid var(--shani); outline-offset: 2px; }
+
+  .top {
+    position: sticky;
+    top: 0;
+    background: var(--tekhelet-deep);
+    border-bottom: 1px solid var(--tekhelet-line);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .top-inner {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .brand { font-weight: 700; font-size: 1.3rem; text-decoration: none; }
+  .back { color: var(--mist); text-decoration: none; }
+  .back:hover { color: var(--linen); text-decoration: underline; }
+
+  main {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 1.25rem; font-weight: 700; }
+  .lede { font-size: 1.3rem; line-height: 1.55; margin: 0 0 1rem; }
+  h2 {
+    font-size: 1.35rem;
+    line-height: 1.3;
+    font-weight: 700;
+    margin: 2.75rem 0 0.6rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--tekhelet-line);
+  }
+  p { margin: 0 0 1rem; }
+  .numbers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2.5rem;
+    margin: 1.25rem 0 1.5rem;
+  }
+  .numbers div { display: flex; flex-direction: column; }
+  .numbers strong { font-size: 2.6rem; line-height: 1; color: var(--shani); font-weight: 700; }
+  .numbers span { color: var(--mist); font-size: 1rem; margin-top: 0.35rem; }
+  .he { font-family: var(--hebrew); font-size: 1.2em; }
+  .kjv { font-family: var(--kjv); }
+  .muted { color: var(--mist); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="./">TorahGPT</a>
+    <a class="back" href="./">Back to the models</a>
+  </div>
+</header>
+
+<main>
+  <h1>About TorahGPT</h1>
+  <p class="lede">
+    Two tiny transformers, about 800,000 parameters each, trained from scratch on a laptop:
+    TorahGPT on the Hebrew Torah of the Leningrad Codex, and KJVGPT on the King James Bible.
+    They run entirely in your browser. Expect scripture-flavoured nonsense.
+  </p>
+
+  <h2>How they write</h2>
+  <p>
+    Each model has learned one thing: given the text so far, how likely each possible next character is.
+    To write, it picks a character at random according to those odds, adds it to the text, and repeats,
+    one character at a time. Nothing else guides it. There's no meaning behind the words, only patterns
+    learned from the text.
+  </p>
+  <p>
+    Temperature changes the odds. Lower values stick closely to the likeliest characters, so the models
+    repeat familiar phrases; higher values give unlikely characters more of a chance, and the text gets stranger.
+  </p>
+
+  <h2>The texts</h2>
+  <p>
+    TorahGPT learned from the five books of Moses in the Westminster Leningrad Codex, as published by the
+    Open Scriptures Hebrew Bible project: 304,850 letters in 5,853 verses. The vowel points and cantillation
+    marks were removed, leaving only the letters, as in a Torah scroll.
+  </p>
+  <p>
+    KJVGPT learned from the 31,102 verses of the King James Bible, from the thiagobodruk/bible collection.
+  </p>
+  <p>
+    About a tenth of each text was held back from training and used to check that the models were learning
+    the style of the text rather than memorising it. TorahGPT rarely reproduces more than a few words of the
+    Torah at a time; what it writes is new, in the Torah's vocabulary.
+  </p>
+
+  <h2>The lengths</h2>
+  <p>The three length options are the traditional counts of the Torah's commandments.</p>
+  <div class="numbers">
+    <div><strong>248</strong> <span>positive commandments</span></div>
+    <div><strong>365</strong> <span>negative commandments</span></div>
+    <div><strong>613</strong> <span>commandments in all</span></div>
+  </div>
+  <p>
+    The Talmud (Makkot 23b) pairs the 365 prohibitions with the days of the solar year, and the
+    248 positive commandments with the limbs of the human body.
+  </p>
+
+  <h2>Translation</h2>
+  <p>
+    TorahGPT's English comes from the free MyMemory translation service. English you type into TorahGPT,
+    and the Hebrew it writes, is sent to MyMemory to be translated; nothing else leaves your browser.
+    Machine translation tends to smooth nonsense into fluent-sounding English, so the Hebrew is always
+    the more honest of the two.
+  </p>
+
+  <h2>The design</h2>
+  <p>
+    The colours come from the curtains of the Tabernacle in Exodus 26:1: blue, purple and scarlet on
+    fine twined linen. TorahGPT writes in Frank Ruhl Libre, a revival of a Hebrew book face from 1908,
+    and KJVGPT in <span class="kjv">IM Fell English</span>, a revival of 17th-century English printing types.
+    The large <span class="he">ב</span> on TorahGPT's opening screen echoes the enlarged letter that
+    traditionally begins a Torah scroll.
+  </p>
+
+  <h2>Code</h2>
+  <p>
+    Everything, from preparing the texts to training the models, is
+    <a href="https://github.com/Kabbalahblah/TorahGPT">on GitHub</a>.
+  </p>
+</main>
+
+</body>
+</html>
