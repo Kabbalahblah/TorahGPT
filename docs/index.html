@@ -74,6 +74,9 @@
   }
   .switch button[aria-pressed="true"] { background: var(--argaman); color: var(--linen); }
   .switch button:disabled { cursor: not-allowed; }
+  .nav { display: flex; align-items: center; gap: 1rem; }
+  .info-link { color: var(--mist); text-decoration: none; }
+  .info-link:hover { color: var(--linen); text-decoration: underline; }
 
   /* Conversation column */
   main {
@@ -111,9 +114,14 @@
   .passage:first-of-type { border-top: 0; }
   .passage-model { font-size: 0.9rem; color: var(--mist); margin: 0 0 0.6rem; }
   .passage[dir="rtl"] .passage-model { text-align: right; }
-  .passage-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .passage.hebrew .passage-text { font-family: var(--hebrew); font-size: 1.55rem; line-height: 1.9; }
-  .passage.kjv .passage-text { font-family: var(--kjv); font-size: 1.35rem; line-height: 1.7; }
+  /* Each verse is a row; in bilingual passages the Hebrew and its English sit side by side */
+  .verse { display: grid; grid-template-columns: 1fr; }
+  .passage.bilingual .verse { grid-template-columns: 1fr 1fr; column-gap: 2rem; align-items: baseline; padding: 0.3rem 0; }
+  .src { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .passage.hebrew .src { font-family: var(--hebrew); font-size: 1.55rem; line-height: 1.9; }
+  .passage.kjv .src { font-family: var(--kjv); font-size: 1.35rem; line-height: 1.7; }
+  .en { margin: 0; font-size: 1.05rem; line-height: 1.6; }
+  .en.pending, .en.failed { color: var(--mist); }
   .prompt { color: var(--mist); }
   .cursor {
     display: inline-block;
@@ -125,9 +133,7 @@
     animation: blink 1s steps(1) infinite;
   }
   @keyframes blink { 50% { opacity: 0; } }
-  .note { color: var(--mist); font-size: 0.95rem; margin: 0.75rem 0 0; }
-  .about { color: var(--mist); font-size: 0.95rem; margin-top: 3rem; max-width: 36rem; }
-  .about a { color: var(--linen); }
+  .note { color: var(--mist); font-size: 0.95rem; margin: 0 0 0.75rem; }
 
   /* Composer, fixed to the bottom of the screen */
   .composer {
@@ -195,7 +201,11 @@
     .top-inner { padding: 0.6rem 1rem; }
     .brand { font-size: 1.15rem; }
     .switch button { padding: 0.3rem 0.65rem; }
+    .nav { gap: 0.6rem; }
     .status { margin-left: 0; width: 100%; }
+  }
+  @media (max-width: 40rem) {
+    .passage.bilingual .verse { grid-template-columns: 1fr; padding: 0.5rem 0; }
   }
   @media (prefers-reduced-motion: reduce) {
     .cursor { animation: none; }
@@ -207,10 +217,13 @@
 <header class="top">
   <div class="top-inner">
     <span class="brand">TorahGPT</span>
-    <div class="switch" role="group" aria-label="Model">
-      <button type="button" data-model="torah" aria-pressed="true">TorahGPT</button>
-      <button type="button" data-model="kjv" aria-pressed="false">KJVGPT</button>
-    </div>
+    <nav class="nav">
+      <div class="switch" role="group" aria-label="Model">
+        <button type="button" data-model="torah" aria-pressed="true">TorahGPT</button>
+        <button type="button" data-model="kjv" aria-pressed="false">KJVGPT</button>
+      </div>
+      <a class="info-link" href="info.html">Info</a>
+    </nav>
   </div>
 </header>
 
@@ -222,19 +235,12 @@
     <div class="examples" id="examples"></div>
   </section>
   <div id="passages"></div>
-  <p class="about">
-    Two tiny transformers, about 800,000 parameters each, trained from scratch on a laptop:
-    TorahGPT on the Hebrew Torah of the Leningrad Codex, KJVGPT on the King James Bible.
-    They run entirely in your browser. Expect scripture-flavoured nonsense.
-    Palette from the Tabernacle curtains, Exodus 26:1.
-    <a href="https://github.com/Kabbalahblah/TorahGPT">Code on GitHub</a>
-  </p>
 </main>
 
 <div class="composer">
   <form id="composer">
     <div class="box">
-      <textarea id="prompt" rows="1" dir="auto" aria-label="Start of a passage"></textarea>
+      <textarea id="prompt" rows="1" dir="auto"></textarea>
       <button class="go" id="go" type="submit">Continue</button>
     </div>
     <div class="settings">
@@ -244,9 +250,9 @@
       </label>
       <label>Length
         <select id="length">
-          <option value="150">150 characters</option>
-          <option value="300" selected>300 characters</option>
-          <option value="600">600 characters</option>
+          <option value="248">248 characters</option>
+          <option value="365" selected>365 characters</option>
+          <option value="613">613 characters</option>
         </select>
       </label>
       <span class="status" id="status" aria-live="polite"></span>
@@ -265,9 +271,10 @@ const MODELS = {
     initial: "ב",
     font: "hebrew",
     dir: "rtl",
-    description: "A tiny language model trained from scratch on the Hebrew Torah, and nothing else. Start a passage in Hebrew and it will carry on.",
-    placeholder: "Start a passage in Hebrew",
-    examples: ["בראשית", "ויאמר משה", "וידבר יהוה אל משה לאמר"],
+    translate: true,
+    description: "A tiny language model trained from scratch on the Hebrew Torah, and nothing else. Start a passage in Hebrew or English and it will carry on, with an English translation beside each verse.",
+    placeholder: "Talk to Torah",
+    examples: ["בראשית", "ויאמר משה", "And the LORD spoke to Moses"],
     ignored: (chars) => `TorahGPT only knows Hebrew letters, so it ignored: ${chars}`,
     empty: "TorahGPT only knows Hebrew letters, so it started a new verse instead.",
   },
@@ -276,8 +283,9 @@ const MODELS = {
     initial: "I",
     font: "kjv",
     dir: "ltr",
+    translate: false,
     description: "The same tiny model, trained on the King James Bible. Start a passage and it will carry on.",
-    placeholder: "Start a passage",
+    placeholder: "Speak unto the King James Bible",
     examples: ["In the beginning", "And the LORD said unto Moses,", "Blessed are the"],
     ignored: (chars) => `KJVGPT never saw these characters in training, so it ignored: ${chars}`,
     empty: "KJVGPT didn't recognise any of those characters, so it started a new verse instead.",
@@ -324,6 +332,86 @@ function normalise(text) {
   return text.replace(/[’‘]/g, "'").replace(/[—–]/g, "-").replace(/æ/g, "ae").replace(/Æ/g, "Ae").replace(/\r/g, "");
 }
 
+// --- Translation, via the free MyMemory service. To use another service, change only this function. ---
+const QUOTA = "Daily translation limit reached";
+async function translate(text, from, to) {
+  const parts = [];
+  for (const piece of chunks(text, 200)) {      // the service accepts only short pieces of text
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(piece)}&langpair=${from}%7C${to}`;
+    const data = await fetch(url).then((r) => r.json());
+    const result = data.responseData?.translatedText ?? "";
+    if (data.quotaFinished || Number(data.responseStatus) === 429 || /MYMEMORY WARNING/i.test(result)) throw new Error(QUOTA);
+    if (Number(data.responseStatus) !== 200) throw new Error("Translation unavailable");
+    parts.push(decodeEntities(result));
+  }
+  return parts.join(" ");
+}
+
+// Split text at spaces into pieces of at most max characters
+function chunks(text, max) {
+  const pieces = [];
+  let current = "";
+  for (const word of text.split(" ")) {
+    if (current && (current + " " + word).length > max) { pieces.push(current); current = word; }
+    else current = current ? current + " " + word : word;
+  }
+  if (current) pieces.push(current);
+  return pieces;
+}
+
+// The service sometimes returns HTML entities such as &#39; instead of an apostrophe
+function decodeEntities(s) {
+  return new DOMParser().parseFromString(s, "text/html").documentElement.textContent;
+}
+
+// A passage is built verse by verse; bilingual passages translate each verse once it's complete
+function makePassage(container, bilingual) {
+  const cursor = document.createElement("span");
+  cursor.className = "cursor";
+  let row;
+
+  function newRow() {
+    const el = document.createElement("div");
+    el.className = "verse";
+    const src = document.createElement("p");
+    src.className = "src";
+    const dim = document.createElement("span");
+    dim.className = "prompt";
+    const out = document.createTextNode("");
+    src.append(dim, out, cursor);
+    el.append(src);
+    let en = null;
+    if (bilingual) {
+      en = document.createElement("p");
+      en.className = "en pending";
+      en.dir = "ltr";
+      el.append(en);
+    }
+    container.append(el);
+    row = { el, dim, out, en, text: "" };
+  }
+
+  function closeRow() {
+    if (!row.text.trim()) { row.el.remove(); return; }       // drop empty verses
+    if (!row.en) return;
+    const en = row.en;
+    en.textContent = "…";
+    translate(row.text, "he", "en")
+      .then((english) => { en.textContent = english; en.className = "en"; })
+      .catch((err) => { en.textContent = err.message === QUOTA ? QUOTA : "Translation unavailable"; en.className = "en failed"; });
+  }
+
+  newRow();
+  return {
+    add(ch, isPrompt) {
+      if (ch === "\n") { closeRow(); newRow(); return; }
+      if (isPrompt) row.dim.textContent += ch; else row.out.appendData(ch);
+      row.text += ch;
+    },
+    finish() { cursor.remove(); closeRow(); },
+  };
+}
+
 function showModel(key) {
   const m = MODELS[key];
   current = key;
@@ -333,12 +421,13 @@ function showModel(key) {
   $("welcome-name").textContent = m.name;
   $("welcome-description").textContent = m.description;
   $("prompt").placeholder = m.placeholder;
+  $("prompt").setAttribute("aria-label", m.placeholder);
   const examples = $("examples");
   examples.replaceChildren(...m.examples.map((text) => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = m.font;
-    b.dir = m.dir;
+    b.className = /[\u05D0-\u05EA]/.test(text) ? "hebrew" : m.font === "kjv" ? "kjv" : "";
+    b.dir = "auto";
     b.textContent = text;
     b.addEventListener("click", () => { $("prompt").value = text; run(); });
     return b;
@@ -361,36 +450,48 @@ async function run() {
     if (!loaded[current]) $("status").textContent = `Loading ${m.name}…`;
     const model = await loadModel(current);
 
-    const typed = normalise($("prompt").value);
+    let typed = normalise($("prompt").value);
+    const notes = [];
+    // English typed into TorahGPT is translated into Hebrew first
+    if (m.translate && /[A-Za-z]/.test(typed) && !/[\u05D0-\u05EA]/.test(typed)) {
+      $("status").textContent = "Translating…";
+      try {
+        const hebrew = await translate(typed, "en", "he");
+        notes.push(`Translated from your English: “${typed.trim()}”`);
+        typed = hebrew;
+      } catch (err) {
+        notes.push(err.message === QUOTA
+          ? `${QUOTA}, so TorahGPT started a new verse instead.`
+          : "The translation service didn't respond, so TorahGPT started a new verse instead.");
+        typed = "";
+      }
+    }
     const kept = [...typed].filter((c) => model.stoi.has(c)).join("").replace(/ {2,}/g, " ");
     const ignored = [...new Set([...typed].filter((c) => !model.stoi.has(c) && c.trim()))];
+    if (!notes.length && ignored.length && kept) notes.push(m.ignored(ignored.join(" ")));
+    if (!kept && !notes.length) notes.push(m.empty);
 
     // Build the passage: the prompt, dimmed, then the continuation as it arrives
     $("welcome").hidden = true;
     const article = document.createElement("article");
-    article.className = `passage ${m.font}`;
+    article.className = `passage ${m.font}${m.translate ? " bilingual" : ""}`;
     article.dir = m.dir;
     const label = document.createElement("p");
     label.className = "passage-model";
     label.textContent = m.name;
-    const text = document.createElement("p");
-    text.className = "passage-text";
-    const promptSpan = document.createElement("span");
-    promptSpan.className = "prompt";
-    promptSpan.textContent = kept;
-    const output = document.createTextNode("");
-    const cursor = document.createElement("span");
-    cursor.className = "cursor";
-    text.append(promptSpan, output, cursor);
-    article.append(label, text);
-    if (ignored.length || !kept) {
+    article.append(label);
+    for (const text of notes) {
       const note = document.createElement("p");
       note.className = "note";
       note.dir = "ltr";
-      note.textContent = kept ? m.ignored(ignored.join(" ")) : m.empty;
+      note.textContent = text;
       article.append(note);
     }
+    const body = document.createElement("div");
+    article.append(body);
     $("passages").append(article);
+    const passage = makePassage(body, m.translate);
+    for (const ch of kept) passage.add(ch, true);
     article.scrollIntoView({ block: "end", behavior: "smooth" });
     $("prompt").value = "";
     $("status").textContent = "Writing…";
@@ -407,12 +508,12 @@ async function run() {
       const next = sample(logits.data.subarray((context.length - 1) * V, context.length * V), temperature);
       ids.push(next);
       const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 120;
-      output.appendData(model.chars[next]);
+      passage.add(model.chars[next], false);
       if (nearBottom) window.scrollTo(0, document.body.scrollHeight);
       if (n >= target && model.chars[next] === "\n") break;    // finish at the end of a verse
       await new Promise((resolve) => setTimeout(resolve, 0));  // let the page redraw and notice Stop
     }
-    cursor.remove();
+    passage.finish();
     $("status").textContent = "";
   } catch (err) {
     console.error(err);
