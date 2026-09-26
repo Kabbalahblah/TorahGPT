@@ -39,7 +39,7 @@
   button, select, textarea, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--shani); outline-offset: 2px; }
 
-  /* Header: name and model switch */
+  /* Header: model switch and info link */
   .top {
     position: sticky;
     top: 0;
@@ -54,10 +54,9 @@
     padding: 0.75rem 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 1rem;
   }
-  .brand { font-weight: 700; font-size: 1.3rem; letter-spacing: 0.01em; }
   .switch {
     display: flex;
     border: 1px solid var(--tekhelet-line);
@@ -89,25 +88,12 @@
   .initial {
     font-size: clamp(6.5rem, 22vw, 10rem);
     line-height: 0.9;
-    color: var(--shani);
+    color: var(--linen);
     margin: 0 0 1.25rem;
   }
   .initial.hebrew { font-family: var(--hebrew); font-weight: 700; }
   .initial.kjv { font-family: var(--kjv); }
-  .welcome h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 0.5rem; font-weight: 700; }
-  .welcome p { color: var(--mist); max-width: 34rem; margin: 0 0 1.5rem; }
-  .examples { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-  .examples button {
-    background: none;
-    border: 1px solid var(--tekhelet-line);
-    border-radius: 0.4rem;
-    padding: 0.45rem 0.85rem;
-    cursor: pointer;
-    font-size: 1.05rem;
-  }
-  .examples button:hover { border-color: var(--argaman); }
-  .examples button.hebrew { font-family: var(--hebrew); font-size: 1.2rem; }
-  .examples button.kjv { font-family: var(--kjv); }
+  .welcome h1 { font-size: 1.35rem; line-height: 1.4; font-weight: 400; margin: 0; text-wrap: balance; }
 
   /* Passages: the prompt, dimmed, followed by the model's continuation */
   .passage { padding: 1.75rem 0; border-top: 1px solid var(--tekhelet-line); }
@@ -147,8 +133,8 @@
   .composer form { max-width: 46rem; margin: 0 auto; }
   .box {
     display: flex;
-    gap: 0.6rem;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.35rem;
     background: var(--tekhelet);
     border: 1px solid var(--tekhelet-line);
     border-radius: 0.9rem;
@@ -156,7 +142,7 @@
   }
   .box:focus-within { border-color: var(--argaman); }
   textarea {
-    flex: 1;
+    width: 100%;
     resize: none;
     border: 0;
     background: none;
@@ -178,31 +164,65 @@
     cursor: pointer;
   }
   .go:disabled { opacity: 0.5; cursor: not-allowed; }
-  .settings {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 1.5rem;
-    margin-top: 0.6rem;
-    font-size: 0.95rem;
+  /* The row under the text: the setting labels, a status message, and the Continue button */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+  .tools { display: flex; gap: 0.4rem; }
+  .status { flex: 1; min-width: 0; text-align: right; color: var(--mist); font-size: 0.9rem; }
+
+  /* Each setting is a label that opens a short list of choices */
+  .option { position: relative; }
+  .pill {
+    border: 1px solid var(--tekhelet-line);
+    border-radius: 999px;
+    background: none;
     color: var(--mist);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
   }
-  .settings label { display: flex; align-items: center; gap: 0.5rem; }
-  .settings input[type="range"] { accent-color: var(--shani); width: 7rem; }
-  .settings select {
+  .pill:hover, .pill[aria-expanded="true"] { border-color: var(--argaman); color: var(--linen); }
+  .pill-value { color: var(--linen); }
+  .menu { position: absolute; left: 0; bottom: 100%; padding-bottom: 0.4rem; z-index: 3; }
+  .menu[hidden] { display: none; }
+  .menu-card {
+    min-width: 6rem;
+    white-space: nowrap;
     background: var(--tekhelet);
     border: 1px solid var(--tekhelet-line);
-    border-radius: 0.4rem;
-    padding: 0.2rem 0.4rem;
+    border-radius: 0.6rem;
+    padding: 0.3rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
   }
-  .status { min-height: 1.5em; margin-left: auto; }
+  .menu-card button {
+    display: flex;
+    width: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: none;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    text-align: left;
+  }
+  .menu-card button:hover, .menu-card button:focus-visible { background: var(--tekhelet-line); outline: none; }
+  .menu-card button[aria-checked="true"] .option-value { color: var(--shani); font-weight: 700; }
+  .option-hint { color: var(--mist); font-size: 0.9rem; }
+
+  /* Opening screen: the welcome and the message box sit together in the middle of the page.
+     Once the first passage appears, the box moves to the bottom (the rules above). */
+  body.empty { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+  body.empty main { width: 100%; margin-top: auto; padding-bottom: 1.75rem; }
+  body.empty .welcome { padding: 0; text-align: center; }
+  body.empty .welcome h1 { margin: 0 auto; }
+  body.empty .composer { position: static; margin-bottom: auto; padding-top: 0; background: none; }
 
   @media (max-width: 30rem) {
     .top-inner { padding: 0.6rem 1rem; }
-    .brand { font-size: 1.15rem; }
     .switch button { padding: 0.3rem 0.65rem; }
     .nav { gap: 0.6rem; }
-    .status { margin-left: 0; width: 100%; }
+    .pill { padding: 0.25rem 0.6rem; }
   }
   @media (max-width: 40rem) {
     .passage.bilingual .verse { grid-template-columns: 1fr; padding: 0.5rem 0; }
@@ -212,11 +232,10 @@
   }
 </style>
 </head>
-<body>
+<body class="empty">
 
 <header class="top">
   <div class="top-inner">
-    <span class="brand">TorahGPT</span>
     <nav class="nav">
       <div class="switch" role="group" aria-label="Model">
         <button type="button" data-model="torah" aria-pressed="true">TorahGPT</button>
@@ -230,9 +249,7 @@
 <main>
   <section class="welcome" id="welcome">
     <p class="initial hebrew" id="initial" aria-hidden="true">ב</p>
-    <h1 id="welcome-name">TorahGPT</h1>
-    <p id="welcome-description"></p>
-    <div class="examples" id="examples"></div>
+    <h1 id="welcome-description"></h1>
   </section>
   <div id="passages"></div>
 </main>
@@ -241,21 +258,11 @@
   <form id="composer">
     <div class="box">
       <textarea id="prompt" rows="1" dir="auto"></textarea>
-      <button class="go" id="go" type="submit">Continue</button>
-    </div>
-    <div class="settings">
-      <label>Temperature
-        <input type="range" id="temperature" min="0.2" max="1.5" step="0.1" value="0.8">
-        <output id="temperature-value" for="temperature">0.8</output>
-      </label>
-      <label>Length
-        <select id="length">
-          <option value="248">248 characters</option>
-          <option value="365" selected>365 characters</option>
-          <option value="613">613 characters</option>
-        </select>
-      </label>
-      <span class="status" id="status" aria-live="polite"></span>
+      <div class="toolbar">
+        <div class="tools" id="tools"></div>
+        <span class="status" id="status" aria-live="polite"></span>
+        <button class="go" id="go" type="submit">Continue</button>
+      </div>
     </div>
   </form>
 </div>
@@ -271,10 +278,11 @@ const MODELS = {
     initial: "ב",
     font: "hebrew",
     dir: "rtl",
+    hebrew: true,
     translate: true,
-    description: "A tiny language model trained from scratch on the Hebrew Torah, and nothing else. Start a passage in Hebrew or English and it will carry on, with an English translation beside each verse.",
-    placeholder: "Talk to Torah",
-    examples: ["בראשית", "ויאמר משה", "And the LORD spoke to Moses"],
+    description: "A Language Model Trained Only on the Hebrew Torah",
+    placeholder: "Speak unto the Torah (דבר אל התורה)",    // after the Torah's "Speak unto the children of Israel"
+    label: "Speak unto the Torah",
     ignored: (chars) => `TorahGPT only knows Hebrew letters, so it ignored: ${chars}`,
     empty: "TorahGPT only knows Hebrew letters, so it started a new verse instead.",
   },
@@ -283,10 +291,11 @@ const MODELS = {
     initial: "I",
     font: "kjv",
     dir: "ltr",
+    hebrew: false,
     translate: false,
-    description: "The same tiny model, trained on the King James Bible. Start a passage and it will carry on.",
+    description: "A Language Model Trained Only on the King James Bible",
     placeholder: "Speak unto the King James Bible",
-    examples: ["In the beginning", "And the LORD said unto Moses,", "Blessed are the"],
+    label: "Speak unto the King James Bible",
     ignored: (chars) => `KJVGPT never saw these characters in training, so it ignored: ${chars}`,
     empty: "KJVGPT didn't recognise any of those characters, so it started a new verse instead.",
   },
@@ -332,6 +341,18 @@ function normalise(text) {
   return text.replace(/[’‘]/g, "'").replace(/[—–]/g, "-").replace(/æ/g, "ae").replace(/Æ/g, "Ae").replace(/\r/g, "");
 }
 
+// Divine names in any Hebrew the page displays are written with the customary substitutes, as in
+// TorahGPT's training text (see prepare_data.py). Only names that can't be mistaken for ordinary
+// words can be recognised here; the others never appear, because TorahGPT never saw them.
+// The patterns are escape codes, so the names themselves don't appear in this file.
+function substituteNames(text) {
+  return text
+    .replace(/['’]/g, "\u05F3")                                                    // apostrophe -> geresh, as in ה׳
+    .replace(/\u05D9\u05D4\u05D5\u05D4/g, "\u05D4\u05F3")                            // the Tetragrammaton -> ה׳
+    .replace(/\u05D0\u05DC(\u05D5?)\u05D4(?=\u05D9)/g, "\u05D0\u05DC$1\u05E7")         // Elohim and its forms -> אלקים
+    .replace(/\u05D0\u05DC\u05D5\u05D4/g, "\u05D0\u05DC\u05D5\u05E7");                // Eloah -> אלוק
+}
+
 // --- Translation, via the free MyMemory service. To use another service, change only this function. ---
 const QUOTA = "Daily translation limit reached";
 async function translate(text, from, to) {
@@ -365,10 +386,18 @@ function decodeEntities(s) {
 }
 
 // A passage is built verse by verse; bilingual passages translate each verse once it's complete
-function makePassage(container, bilingual) {
+function makePassage(container, bilingual, filter) {
   const cursor = document.createElement("span");
   cursor.className = "cursor";
   let row;
+  let word = "";    // the word being written, shown once it's complete
+
+  function showWord() {
+    const shown = filter ? filter(word) : word;
+    row.out.appendData(shown);
+    row.text += shown;
+    word = "";
+  }
 
   function newRow() {
     const el = document.createElement("div");
@@ -404,12 +433,87 @@ function makePassage(container, bilingual) {
   newRow();
   return {
     add(ch, isPrompt) {
-      if (ch === "\n") { closeRow(); newRow(); return; }
-      if (isPrompt) row.dim.textContent += ch; else row.out.appendData(ch);
-      row.text += ch;
+      if (ch === "\n") { showWord(); closeRow(); newRow(); }
+      else if (isPrompt) { row.dim.textContent += ch; row.text += ch; }
+      else if (ch === " ") { showWord(); row.out.appendData(" "); row.text += " "; }
+      else word += ch;
     },
-    finish() { cursor.remove(); closeRow(); },
+    finish() { showWord(); cursor.remove(); closeRow(); },
   };
+}
+
+// Temperature and length, chosen from labels inside the message box
+const SETTINGS = {
+  temperature: {
+    label: "Temperature", value: 0.8, format: (v) => v.toFixed(1),
+    options: [[0.5, "Cautious"], [0.8, "Balanced"], [1.0, "Adventurous"], [1.3, "Wild"]],
+  },
+  length: {
+    label: "Length", value: 365, format: String,
+    options: [[248], [365], [613]],
+  },
+};
+
+// Each label opens its list on hover, click, tap or Enter, and closes when a choice is made,
+// the pointer or focus moves away, Escape is pressed, or the page is clicked elsewhere
+function buildTools() {
+  const closers = [];
+  for (const setting of Object.values(SETTINGS)) {
+    const option = document.createElement("div");
+    option.className = "option";
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = "pill";
+    pill.setAttribute("aria-haspopup", "menu");
+    pill.setAttribute("aria-expanded", "false");
+    const shown = document.createElement("span");
+    shown.className = "pill-value";
+    pill.append(`${setting.label} `, shown);
+    const menu = document.createElement("div");
+    menu.className = "menu";
+    menu.hidden = true;
+    const card = document.createElement("div");
+    card.className = "menu-card";
+    card.setAttribute("role", "menu");
+    card.setAttribute("aria-label", setting.label);
+    menu.append(card);
+
+    const close = () => { menu.hidden = true; pill.setAttribute("aria-expanded", "false"); };
+    const open = () => { closers.forEach((c) => c()); menu.hidden = false; pill.setAttribute("aria-expanded", "true"); };
+    closers.push(close);
+
+    const render = () => {
+      shown.textContent = setting.format(setting.value);
+      card.replaceChildren(...setting.options.map(([value, hint]) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.setAttribute("role", "menuitemradio");
+        item.setAttribute("aria-checked", String(value === setting.value));
+        const v = document.createElement("span");
+        v.className = "option-value";
+        v.textContent = setting.format(value);
+        item.append(v);
+        if (hint) {
+          const h = document.createElement("span");
+          h.className = "option-hint";
+          h.textContent = hint;
+          item.append(" ", h);
+        }
+        item.addEventListener("click", () => { setting.value = value; render(); close(); pill.focus(); });
+        return item;
+      }));
+    };
+    render();
+
+    option.addEventListener("mouseenter", open);
+    option.addEventListener("mouseleave", close);
+    pill.addEventListener("click", open);
+    option.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); pill.focus(); } });
+    option.addEventListener("focusout", (e) => { if (!option.contains(e.relatedTarget) && !option.matches(":hover")) close(); });
+    option.append(pill, menu);
+    $("tools").append(option);
+  }
+  document.addEventListener("click", (e) => { if (!e.target.closest(".option")) closers.forEach((c) => c()); });
 }
 
 function showModel(key) {
@@ -418,27 +522,16 @@ function showModel(key) {
   document.querySelectorAll(".switch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.model === key)));
   $("initial").textContent = m.initial;
   $("initial").className = `initial ${m.font}`;
-  $("welcome-name").textContent = m.name;
   $("welcome-description").textContent = m.description;
   $("prompt").placeholder = m.placeholder;
-  $("prompt").setAttribute("aria-label", m.placeholder);
-  const examples = $("examples");
-  examples.replaceChildren(...m.examples.map((text) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = /[\u05D0-\u05EA]/.test(text) ? "hebrew" : m.font === "kjv" ? "kjv" : "";
-    b.dir = "auto";
-    b.textContent = text;
-    b.addEventListener("click", () => { $("prompt").value = text; run(); });
-    return b;
-  }));
+  $("prompt").setAttribute("aria-label", m.label);
   if (!$("passages").children.length) $("welcome").hidden = false;
 }
 
 function setBusy(busy) {
   generating = busy;
   $("go").textContent = busy ? "Stop" : "Continue";
-  document.querySelectorAll(".switch button, .examples button").forEach((b) => { b.disabled = busy; });
+  document.querySelectorAll(".switch button").forEach((b) => { b.disabled = busy; });
 }
 
 async function run() {
@@ -466,13 +559,16 @@ async function run() {
         typed = "";
       }
     }
-    const kept = [...typed].filter((c) => model.stoi.has(c)).join("").replace(/ {2,}/g, " ");
+    if (m.hebrew) typed = substituteNames(typed);
+    let kept = [...typed].filter((c) => model.stoi.has(c)).join("").replace(/ {2,}/g, " ");
     const ignored = [...new Set([...typed].filter((c) => !model.stoi.has(c) && c.trim()))];
     if (!notes.length && ignored.length && kept) notes.push(m.ignored(ignored.join(" ")));
     if (!kept && !notes.length) notes.push(m.empty);
+    if (kept && !/\s$/.test(kept)) kept += " ";    // the model starts a new word after the prompt
 
     // Build the passage: the prompt, dimmed, then the continuation as it arrives
     $("welcome").hidden = true;
+    document.body.classList.remove("empty");
     const article = document.createElement("article");
     article.className = `passage ${m.font}${m.translate ? " bilingual" : ""}`;
     article.dir = m.dir;
@@ -490,7 +586,7 @@ async function run() {
     const body = document.createElement("div");
     article.append(body);
     $("passages").append(article);
-    const passage = makePassage(body, m.translate);
+    const passage = makePassage(body, m.translate, m.hebrew ? substituteNames : null);
     for (const ch of kept) passage.add(ch, true);
     article.scrollIntoView({ block: "end", behavior: "smooth" });
     $("prompt").value = "";
@@ -498,8 +594,8 @@ async function run() {
 
     // Generate one character at a time: predict, sample, append, repeat
     const ids = kept ? [...kept].map((c) => model.stoi.get(c)) : [model.stoi.get("\n")];
-    const target = Number($("length").value);
-    const temperature = Number($("temperature").value);
+    const target = SETTINGS.length.value;
+    const temperature = SETTINGS.temperature.value;
     const V = model.chars.length;
     for (let n = 0; n < target + 150 && !stopRequested; n++) {
       const context = ids.slice(-model.blockSize);
@@ -532,7 +628,7 @@ $("prompt").addEventListener("input", (e) => {
   e.target.style.height = "auto";
   e.target.style.height = `${e.target.scrollHeight}px`;
 });
-$("temperature").addEventListener("input", (e) => { $("temperature-value").textContent = Number(e.target.value).toFixed(1); });
+buildTools();
 showModel("torah");
 </script>
 </body>
