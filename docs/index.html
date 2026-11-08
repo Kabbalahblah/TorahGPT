@@ -8,44 +8,60 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
 <style>
-  /* Palette: the Tabernacle curtains, Exodus 26:1 — blue, purple, scarlet, and fine linen */
+  /* Colours and type from ciletti.xyz, in light and dark versions that follow the visitor's device */
   :root {
-    --tekhelet-deep: #0E1A3A;   /* background */
-    --tekhelet: #1A2C5B;        /* raised surfaces */
-    --tekhelet-line: #2A3F74;   /* borders */
-    --linen: #EDE9DF;           /* text */
-    --mist: #95A1C3;            /* secondary text */
-    --argaman: #8E3B78;         /* purple accent */
-    --shani: #E0483A;           /* scarlet: cursor, focus */
-    --shani-deep: #B8322A;      /* scarlet: button */
-    --ui: "Frank Ruhl Libre", "Times New Roman", serif;
+    --bg: #eceff5;              /* page */
+    --surface: #f7f8fb;         /* the message box and menus */
+    --ink: #1d2230;             /* text */
+    --muted: #5c6373;           /* secondary text */
+    --rule: #d3d8e2;            /* borders */
+    --accent: #2a3f8f;          /* the one accent: selected model, button, cursor */
+    --on-accent: #ffffff;       /* text on the accent */
+    --select: #d3dbf2;          /* selected text */
+    --shadow: 0 0.5rem 1.5rem rgba(29, 34, 48, 0.12);
+    --ui: "STIX Two Text", "Frank Ruhl Libre", "Iowan Old Style", Palatino, Georgia, serif;
     --hebrew: "Frank Ruhl Libre", "David", "Times New Roman", serif;
     --kjv: "IM Fell English", Garamond, Georgia, serif;
-    color-scheme: dark;
+    color-scheme: light;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121722;
+      --surface: #181e2b;
+      --ink: #e3e5ea;
+      --muted: #9aa0ad;
+      --rule: #2c3039;
+      --accent: #a6b6f2;
+      --on-accent: #121722;
+      --select: #2d3550;
+      --shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.4);
+      color-scheme: dark;
+    }
+  }
+  ::selection { background: var(--select); }
   * { box-sizing: border-box; }
-  html { background: var(--tekhelet-deep); }
+  html { background: var(--bg); }
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--tekhelet-deep);
-    color: var(--linen);
+    background: var(--bg);
+    color: var(--ink);
     font-family: var(--ui);
     font-size: 1.0625rem;
     line-height: 1.55;
   }
   button, select, textarea, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 2px solid var(--shani); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* Header: model switch and info link */
   .top {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: var(--tekhelet-deep);
-    border-bottom: 1px solid var(--tekhelet-line);
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
     padding-top: env(safe-area-inset-top, 0px);
   }
   .top-inner {
@@ -54,12 +70,12 @@
     padding: 0.75rem 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 1rem;
   }
   .switch {
     display: flex;
-    border: 1px solid var(--tekhelet-line);
+    border: 1px solid var(--rule);
     border-radius: 999px;
     padding: 3px;
   }
@@ -69,13 +85,13 @@
     padding: 0.3rem 0.9rem;
     border-radius: 999px;
     cursor: pointer;
-    color: var(--mist);
+    color: var(--muted);
   }
-  .switch button[aria-pressed="true"] { background: var(--argaman); color: var(--linen); }
+  .switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
   .switch button:disabled { cursor: not-allowed; }
   .nav { display: flex; align-items: center; gap: 1rem; }
-  .info-link { color: var(--mist); text-decoration: none; }
-  .info-link:hover { color: var(--linen); text-decoration: underline; }
+  .info-link { color: var(--muted); text-decoration: none; }
+  .info-link:hover { color: var(--ink); text-decoration: underline; }
 
   /* Conversation column */
   main {
@@ -88,17 +104,19 @@
   .initial {
     font-size: clamp(6.5rem, 22vw, 10rem);
     line-height: 0.9;
-    color: var(--linen);
+    color: var(--ink);
     margin: 0 0 1.25rem;
   }
   .initial.hebrew { font-family: var(--hebrew); font-weight: 700; }
   .initial.kjv { font-family: var(--kjv); }
   .welcome h1 { font-size: 1.35rem; line-height: 1.4; font-weight: 400; margin: 0; text-wrap: balance; }
+  /* the short line under the heading, as on ciletti.xyz */
+  .welcome h1::after { content: ""; display: block; width: 2.5rem; height: 2px; margin: 1rem auto 0; background: var(--accent); opacity: 0.75; }
 
   /* Passages: the prompt, dimmed, followed by the model's continuation */
-  .passage { padding: 1.75rem 0; border-top: 1px solid var(--tekhelet-line); }
+  .passage { padding: 1.75rem 0; border-top: 1px solid var(--rule); }
   .passage:first-of-type { border-top: 0; }
-  .passage-model { font-size: 0.9rem; color: var(--mist); margin: 0 0 0.6rem; }
+  .passage-model { font-size: 0.9rem; color: var(--muted); margin: 0 0 0.6rem; }
   .passage[dir="rtl"] .passage-model { text-align: right; }
   /* Each verse is a row; in bilingual passages the Hebrew and its English sit side by side */
   .verse { display: grid; grid-template-columns: 1fr; }
@@ -107,19 +125,19 @@
   .passage.hebrew .src { font-family: var(--hebrew); font-size: 1.55rem; line-height: 1.9; }
   .passage.kjv .src { font-family: var(--kjv); font-size: 1.35rem; line-height: 1.7; }
   .en { margin: 0; font-size: 1.05rem; line-height: 1.6; }
-  .en.pending, .en.failed { color: var(--mist); }
-  .prompt { color: var(--mist); }
+  .en.pending, .en.failed { color: var(--muted); }
+  .prompt { color: var(--muted); }
   .cursor {
     display: inline-block;
     width: 0.45em;
     height: 1em;
-    background: var(--shani);
+    background: var(--accent);
     vertical-align: -0.12em;
     margin-inline-start: 0.08em;
     animation: blink 1s steps(1) infinite;
   }
   @keyframes blink { 50% { opacity: 0; } }
-  .note { color: var(--mist); font-size: 0.95rem; margin: 0 0 0.75rem; }
+  .note { color: var(--muted); font-size: 0.95rem; margin: 0 0 0.75rem; }
 
   /* Composer, fixed to the bottom of the screen */
   .composer {
@@ -127,7 +145,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to top, var(--tekhelet-deep) 75%, transparent);
+    background: linear-gradient(to top, var(--bg) 75%, transparent);
     padding: 1.5rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
   }
   .composer form { max-width: 46rem; margin: 0 auto; }
@@ -135,12 +153,12 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    background: var(--tekhelet);
-    border: 1px solid var(--tekhelet-line);
+    background: var(--surface);
+    border: 1px solid var(--rule);
     border-radius: 0.9rem;
     padding: 0.6rem;
   }
-  .box:focus-within { border-color: var(--argaman); }
+  .box:focus-within { border-color: var(--accent); }
   textarea {
     width: 100%;
     resize: none;
@@ -153,12 +171,12 @@
     min-width: 0;
   }
   textarea:focus-visible { outline: none; }
-  textarea::placeholder { color: var(--mist); }
+  textarea::placeholder { color: var(--muted); }
   .go {
     border: 0;
     border-radius: 0.6rem;
-    background: var(--shani-deep);
-    color: var(--linen);
+    background: var(--accent);
+    color: var(--on-accent);
     padding: 0.55rem 1.1rem;
     font-weight: 500;
     cursor: pointer;
@@ -167,31 +185,31 @@
   /* The row under the text: the setting labels, a status message, and the Continue button */
   .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
   .tools { display: flex; gap: 0.4rem; }
-  .status { flex: 1; min-width: 0; text-align: right; color: var(--mist); font-size: 0.9rem; }
+  .status { flex: 1; min-width: 0; text-align: right; color: var(--muted); font-size: 0.9rem; }
 
   /* Each setting is a label that opens a short list of choices */
   .option { position: relative; }
   .pill {
-    border: 1px solid var(--tekhelet-line);
+    border: 1px solid var(--rule);
     border-radius: 999px;
     background: none;
-    color: var(--mist);
+    color: var(--muted);
     padding: 0.25rem 0.75rem;
     font-size: 0.9rem;
     cursor: pointer;
   }
-  .pill:hover, .pill[aria-expanded="true"] { border-color: var(--argaman); color: var(--linen); }
-  .pill-value { color: var(--linen); }
+  .pill:hover, .pill[aria-expanded="true"] { border-color: var(--accent); color: var(--ink); }
+  .pill-value { color: var(--ink); }
   .menu { position: absolute; left: 0; bottom: 100%; padding-bottom: 0.4rem; z-index: 3; }
   .menu[hidden] { display: none; }
   .menu-card {
     min-width: 6rem;
     white-space: nowrap;
-    background: var(--tekhelet);
-    border: 1px solid var(--tekhelet-line);
+    background: var(--surface);
+    border: 1px solid var(--rule);
     border-radius: 0.6rem;
     padding: 0.3rem;
-    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow);
   }
   .menu-card button {
     display: flex;
@@ -206,9 +224,9 @@
     cursor: pointer;
     text-align: left;
   }
-  .menu-card button:hover, .menu-card button:focus-visible { background: var(--tekhelet-line); outline: none; }
-  .menu-card button[aria-checked="true"] .option-value { color: var(--shani); font-weight: 700; }
-  .option-hint { color: var(--mist); font-size: 0.9rem; }
+  .menu-card button:hover, .menu-card button:focus-visible { background: var(--rule); outline: none; }
+  .menu-card button[aria-checked="true"] .option-value { color: var(--accent); font-weight: 500; }
+  .option-hint { color: var(--muted); font-size: 0.9rem; }
 
   /* Opening screen: the welcome and the message box sit together in the middle of the page.
      Once the first passage appears, the box moves to the bottom (the rules above). */

@@ -8,38 +8,51 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
 <style>
-  /* Same palette as the main page: the Tabernacle curtains, Exodus 26:1 */
+  /* Same colours and type as the main page, from ciletti.xyz, in light and dark versions */
   :root {
-    --tekhelet-deep: #0E1A3A;
-    --tekhelet-line: #2A3F74;
-    --linen: #EDE9DF;
-    --mist: #95A1C3;
-    --shani: #E0483A;
-    --ui: "Frank Ruhl Libre", "Times New Roman", serif;
+    --bg: #eceff5;
+    --ink: #1d2230;
+    --muted: #5c6373;
+    --rule: #d3d8e2;
+    --accent: #2a3f8f;
+    --select: #d3dbf2;
+    --ui: "STIX Two Text", "Frank Ruhl Libre", "Iowan Old Style", Palatino, Georgia, serif;
     --hebrew: "Frank Ruhl Libre", "David", "Times New Roman", serif;
     --kjv: "IM Fell English", Garamond, Georgia, serif;
-    color-scheme: dark;
+    color-scheme: light;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121722;
+      --ink: #e3e5ea;
+      --muted: #9aa0ad;
+      --rule: #2c3039;
+      --accent: #a6b6f2;
+      --select: #2d3550;
+      color-scheme: dark;
+    }
+  }
+  ::selection { background: var(--select); }
   * { box-sizing: border-box; }
-  html { background: var(--tekhelet-deep); }
+  html { background: var(--bg); }
   body {
     margin: 0;
-    background: var(--tekhelet-deep);
-    color: var(--linen);
+    background: var(--bg);
+    color: var(--ink);
     font-family: var(--ui);
     font-size: 1.125rem;
     line-height: 1.65;
   }
-  a { color: var(--linen); text-underline-offset: 0.15em; }
-  :focus-visible { outline: 2px solid var(--shani); outline-offset: 2px; }
+  a { color: var(--accent); text-underline-offset: 0.15em; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .top {
     position: sticky;
     top: 0;
-    background: var(--tekhelet-deep);
-    border-bottom: 1px solid var(--tekhelet-line);
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
     padding-top: env(safe-area-inset-top, 0px);
   }
   .top-inner {
@@ -51,24 +64,24 @@
     justify-content: space-between;
     gap: 1rem;
   }
-  .brand { font-weight: 700; font-size: 1.3rem; text-decoration: none; }
-  .back { color: var(--mist); text-decoration: none; }
-  .back:hover { color: var(--linen); text-decoration: underline; }
+  .brand { color: var(--ink); font-weight: 500; font-size: 1.3rem; text-decoration: none; }
+  .back { color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); text-decoration: underline; }
 
   main {
     max-width: 40rem;
     margin: 0 auto;
     padding: 3rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px));
   }
-  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 1.25rem; font-weight: 700; }
+  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 1.25rem; font-weight: 500; }
   .lede { font-size: 1.3rem; line-height: 1.55; margin: 0 0 1rem; }
   h2 {
     font-size: 1.35rem;
     line-height: 1.3;
-    font-weight: 700;
+    font-weight: 500;
     margin: 2.75rem 0 0.6rem;
     padding-top: 1.25rem;
-    border-top: 1px solid var(--tekhelet-line);
+    border-top: 1px solid var(--rule);
   }
   p { margin: 0 0 1rem; }
   .numbers {
@@ -78,11 +91,11 @@
     margin: 1.25rem 0 1.5rem;
   }
   .numbers div { display: flex; flex-direction: column; }
-  .numbers strong { font-size: 2.6rem; line-height: 1; color: var(--shani); font-weight: 700; }
-  .numbers span { color: var(--mist); font-size: 1rem; margin-top: 0.35rem; }
+  .numbers strong { font-size: 2.6rem; line-height: 1; color: var(--accent); font-weight: 500; }
+  .numbers span { color: var(--muted); font-size: 1rem; margin-top: 0.35rem; }
   .he { font-family: var(--hebrew); font-size: 1.2em; }
   .kjv { font-family: var(--kjv); }
-  .muted { color: var(--mist); }
+  .muted { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -153,9 +166,9 @@
 
   <h2>The design</h2>
   <p>
-    The colours come from the curtains of the Tabernacle in Exodus 26:1: blue, purple and scarlet on
-    fine twined linen. TorahGPT writes in Frank Ruhl Libre, a revival of a Hebrew book face from 1908,
-    and KJVGPT in <span class="kjv">IM Fell English</span>, a revival of 17th-century English printing types.
+    TorahGPT writes in Frank Ruhl Libre, a revival of a Hebrew book face from 1908, and KJVGPT in
+    <span class="kjv">IM Fell English</span>, a revival of 17th-century English printing types; everything
+    else is set in STIX Two Text.
     The large <span class="he">ב</span> on TorahGPT's opening screen echoes the enlarged letter that
     traditionally begins a Torah scroll.
   </p>
