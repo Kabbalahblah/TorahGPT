@@ -89,7 +89,7 @@
   }
   .switch button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
   .switch button:disabled { cursor: not-allowed; }
-  .nav { display: flex; align-items: center; gap: 1rem; }
+  .nav { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }    /* switch left, Info right */
   .info-link { color: var(--muted); text-decoration: none; }
   .info-link:hover { color: var(--ink); text-decoration: underline; }
 
