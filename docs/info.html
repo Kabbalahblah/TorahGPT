@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>About TorahGPT</title>
-<meta name="description" content="How TorahGPT and KJVGPT work: tiny language models trained from scratch on the Hebrew Torah and the King James Bible.">
+<meta name="author" content="Sigfrido D. Ciletti">
+<meta name="description" content="Character-level language models trained only on the Hebrew Torah and on the King James Bible: data, models, training, results, and limitations.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&family=Frank+Ruhl+Libre:wght@400;500;700&family=IM+Fell+English:ital@0;1&display=swap">
 <style>
-  /* Same colours and type as the main page, from ciletti.xyz, in light and dark versions */
+  /* Same colors and type as the main page, from ciletti.xyz, in light and dark versions */
   :root {
     --bg: #eceff5;
     --ink: #1d2230;
@@ -56,7 +57,7 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
   .top-inner {
-    max-width: 40rem;
+    max-width: 42rem;
     margin: 0 auto;
     padding: 0.75rem 1.25rem;
     display: flex;
@@ -68,34 +69,43 @@
   .back { color: var(--muted); text-decoration: none; }
   .back:hover { color: var(--ink); text-decoration: underline; }
 
+  /* The document, following the info page of ciletti.xyz/induction */
   main {
-    max-width: 40rem;
+    max-width: 42rem;
     margin: 0 auto;
     padding: 3rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px));
   }
-  h1 { font-size: 2.3rem; line-height: 1.15; margin: 0 0 1.25rem; font-weight: 500; }
-  .lede { font-size: 1.3rem; line-height: 1.55; margin: 0 0 1rem; }
+  h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 0.75rem; font-weight: 500; text-wrap: balance; }
+  .byline { font-size: 1.0625rem; margin: 0 0 2rem; }
+  .byline a { text-decoration: none; }
+  .byline a:hover { text-decoration: underline; }
+  .lede { font-size: 1.1875rem; line-height: 1.6; }
+  p, li { line-height: 1.65; }
+  p { margin: 0 0 1rem; }
   h2 {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     line-height: 1.3;
     font-weight: 500;
-    margin: 2.75rem 0 0.6rem;
+    margin: 2.5rem 0 0.75rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--rule);
   }
-  p { margin: 0 0 1rem; }
-  .numbers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 2.5rem;
-    margin: 1.25rem 0 1.5rem;
-  }
-  .numbers div { display: flex; flex-direction: column; }
-  .numbers strong { font-size: 2.6rem; line-height: 1; color: var(--accent); font-weight: 500; }
-  .numbers span { color: var(--muted); font-size: 1rem; margin-top: 0.35rem; }
-  .he { font-family: var(--hebrew); font-size: 1.2em; }
-  .kjv { font-family: var(--kjv); }
-  .muted { color: var(--muted); }
+  ul { padding-left: 1.125rem; margin: 0; }
+  li { margin-bottom: 0.375rem; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; font-variant-numeric: lining-nums tabular-nums; }
+  .names { margin: 0.5rem 0 1.25rem; font-size: 0.9375rem; }
+  .names td { padding: 0.4375rem 1.5rem 0.4375rem 0; }
+  .names td:nth-child(2) { font-family: var(--hebrew); font-size: 1.15rem; }
+  .names td:last-child { text-align: right; padding-right: 0; color: var(--muted); }
+  .data { width: 100%; margin: 0.5rem 0 1.25rem; font-size: 0.9375rem; }
+  .data th, .data td { padding: 0.45rem 0 0.45rem 1rem; border-top: 1px solid var(--rule); text-align: right; font-weight: 400; }
+  .data th:first-child { padding-left: 0; text-align: left; }
+  .data thead th { color: var(--muted); border-top: 0; }
+  .data tbody tr:last-child > * { border-bottom: 1px solid var(--rule); }
+  .he { font-family: var(--hebrew); }
+  .foot { margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.875rem; }
+  .foot p { margin: 0; }
 </style>
 </head>
 <body>
@@ -108,76 +118,79 @@
 </header>
 
 <main>
-  <h1>About TorahGPT</h1>
-  <p class="lede">
-    Two tiny transformers, about 800,000 parameters each, trained from scratch on a laptop:
-    TorahGPT on the Hebrew Torah of the Leningrad Codex, and KJVGPT on the King James Bible.
-    They run entirely in your browser. Expect scripture-flavoured nonsense.
-  </p>
+  <h1>Character-Level Language Models of the Hebrew Torah and the King James Bible</h1>
+  <p class="byline"><a href="https://ciletti.xyz" rel="author">Sigfrido D. Ciletti</a></p>
 
-  <h2>How they write</h2>
-  <p>
-    Each model has learned one thing: given the text so far, how likely each possible next character is.
-    To write, it picks a character at random according to those odds, adds it to the text, and repeats,
-    one character at a time. Nothing else guides it. There's no meaning behind the words, only patterns
-    learned from the text.
-  </p>
-  <p>
-    Temperature changes the odds. Lower values stick closely to the likeliest characters, so the models
-    repeat familiar phrases; higher values give unlikely characters more of a chance, and the text gets stranger.
-  </p>
+  <p class="lede">This page presents two language models, TorahGPT and KJVGPT, trained by the author on the Hebrew text of the Five Books of Moses and on the King James Version of the Bible respectively, and on nothing else. Each is a small transformer that assigns a probability to every possible next character, given the 128 characters that precede it, and writes by sampling from those probabilities one character at a time. Both models run entirely in the reader’s browser.</p>
+  <p class="lede">The models are not intended to produce meaningful text, and they do not. Their interest is that of a controlled comparison: two models of identical architecture, trained under identical conditions on corpora that differ in size by an order of magnitude, exhibit in their output and in their measured losses the effect of the quantity of training data. The Hebrew corpus also raises a question that does not arise in ordinary language modeling, namely how a model of the Torah should treat the divine names; the treatment adopted here is described below.</p>
 
   <h2>The texts</h2>
-  <p>
-    TorahGPT learned from the five books of Moses in the Westminster Leningrad Codex, as published by the
-    Open Scriptures Hebrew Bible project: 304,850 letters in 5,853 verses. The vowel points and cantillation
-    marks were removed, leaving only the letters, as in a Torah scroll. Divine names are written with the
-    substitutes customary in Orthodox writing, such as <span class="he">ה׳</span> and <span class="he">אלקים</span>,
-    so TorahGPT never saw the names themselves.
-  </p>
-  <p>
-    KJVGPT learned from the 31,102 verses of the King James Bible, from the thiagobodruk/bible collection.
-  </p>
-  <p>
-    About a tenth of each text was held back from training and used to check that the models were learning
-    the style of the text rather than memorising it. TorahGPT rarely reproduces more than a few words of the
-    Torah at a time; what it writes is new, in the Torah's vocabulary.
-  </p>
+  <p>The Hebrew text is that of the Westminster Leningrad Codex, as published with morphological annotation by the Open Scriptures Hebrew Bible project. In that edition the five books comprise 5,853 verses and 304,850 letters, against the traditional count of 304,805; manuscripts differ slightly in spelling. Vowel points and cantillation marks are removed, leaving the consonantal text as it is written in a Torah scroll, and where the written and the read forms of a word differ, the written form is retained. Words are separated by spaces and verses by line breaks. The resulting text has 381,224 characters, drawn from an alphabet of 31 symbols: the 27 letter forms, the space, the line break, and the two marks used in the substitutes for the divine names.</p>
+  <p>The English text is the King James Version as compiled in the thiagobodruk/bible collection, comprising 31,102 verses. Remnants of the translators’ marginal notes that had entered the text of some verses are removed, and typographic characters are replaced by their keyboard equivalents, so that text typed by a reader is drawn from the same alphabet as the training text. The resulting text has 4,138,674 characters, drawn from an alphabet of 63 symbols.</p>
 
-  <h2>The lengths</h2>
-  <p>The three length options are the traditional counts of the Torah's commandments.</p>
-  <div class="numbers">
-    <div><strong>248</strong> <span>positive commandments</span></div>
-    <div><strong>365</strong> <span>negative commandments</span></div>
-    <div><strong>613</strong> <span>commandments in all</span></div>
+  <h2>The divine names</h2>
+  <p>In Jewish law a divine name, once written, may not be erased, and in writing other than sacred texts it is customary to replace the names with conventional substitutes. TorahGPT is trained on text in which this has been done, so that it never encounters the names themselves. The difficulty is that several names, once the vowels are removed, are spelled exactly as ordinary words: <i>El</i> as the preposition “to,” and <i>Adonai</i> as “my lord” addressed to a person. The two are distinguished by means of the Strong’s numbers with which the Open Scriptures edition annotates every word. The name <i>Ehyeh</i>, which in Exodus 3:14 is annotated as the verb “to be,” is identified by its verse. Each name is written with the substitute customary in Orthodox writing, as follows, with the number of its occurrences in the Torah.</p>
+  <div class="table-wrap">
+  <table class="names">
+    <tr><td>The Tetragrammaton</td><td><span class="he" lang="he" dir="rtl">ה׳</span></td><td>1,820</td></tr>
+    <tr><td><i>Elohim</i>, with its inflected forms</td><td><span class="he" lang="he" dir="rtl">אלקים</span></td><td>812</td></tr>
+    <tr><td><i>El</i></td><td><span class="he" lang="he" dir="rtl">קל</span></td><td>49</td></tr>
+    <tr><td><i>Adonai</i></td><td><span class="he" lang="he" dir="rtl">אדנ-י</span></td><td>18</td></tr>
+    <tr><td><i>Shaddai</i></td><td><span class="he" lang="he" dir="rtl">שד-י</span></td><td>9</td></tr>
+    <tr><td><i>Ehyeh</i></td><td><span class="he" lang="he" dir="rtl">אהי-ה</span></td><td>3</td></tr>
+    <tr><td><i>Eloah</i></td><td><span class="he" lang="he" dir="rtl">אלוק</span></td><td>2</td></tr>
+    <tr><td><i>Yah</i></td><td><span class="he" lang="he" dir="rtl">י-ה</span></td><td>2</td></tr>
+  </table>
   </div>
-  <p>
-    The Talmud (Makkot 23b) pairs the 365 prohibitions with the days of the solar year, and the
-    248 positive commandments with the limbs of the human body.
-  </p>
+  <p>The page applies the same substitutions to all Hebrew it displays, whether typed by the reader, returned by the translation service, or written by the model. Without the annotation, only those names that cannot be mistaken for ordinary words can be recognized, so this second measure covers the Tetragrammaton and the forms of <i>Elohim</i> and <i>Eloah</i>; the remaining names are excluded by the training text alone.</p>
+
+  <h2>The models</h2>
+  <p>Each model is a decoder-only transformer (Vaswani et al., 2017) operating on characters. A character is represented by a learned vector of 128 dimensions, to which a learned vector representing its position is added. These representations pass through four blocks, each comprising causal self-attention with four heads and a feed-forward layer, and a final linear map assigns a score to every symbol of the alphabet. Dropout with probability 0.2 is applied throughout. TorahGPT has 817,695 parameters and KJVGPT 825,919, the difference arising from the sizes of their alphabets.</p>
+
+  <h2>Training</h2>
+  <p>The verses of each text are divided into consecutive blocks of one hundred, and the first block of every ten is withheld from training, so that 10.3 percent of the verses of each text are reserved for evaluation. In the Torah the withheld passages are Genesis 1:1–4:20 and 34:20–37:16, Exodus 18:1–21:22, Leviticus 11:3–13:47, Numbers 10:12–13:24, and Deuteronomy 3:24–6:12. Of the ten possible choices of withheld block, this one minimizes the proportion of withheld text that occurs verbatim in the training text: 2.8 percent of its characters lie within a stretch of thirty characters that also occurs in the training text, against between 3.8 and 9.4 percent for the other choices. The consideration matters in the Torah, whose formulas and parallel passages, such as the offerings of the twelve tribal leaders recorded in nearly identical words in Numbers 7, would otherwise allow memorization to pass for generalization.</p>
+  <p>Each model was trained with the AdamW optimizer at a learning rate of 0.001, on batches of 32 passages of 128 characters, for 5,000 steps, on the processor of a laptop; neither required more than an hour. The loss on withheld text was estimated every 250 steps, and the parameters with the lowest estimate were retained.</p>
+
+  <h2>Results</h2>
+  <p>Losses are given in bits per character: the mean, over a text, of −log<sub>2</sub> of the probability assigned to each character before it was observed. Every character is scored, in consecutive windows of 128 characters. The counting model predicts each character from the frequencies with which characters followed the same preceding characters in the training text, with add-one smoothing; the figure given is that for the best number of preceding characters, three for the Torah and four for the King James Version.</p>
+  <div class="table-wrap">
+  <table class="data">
+    <thead><tr><th></th><th>TorahGPT</th><th>KJVGPT</th></tr></thead>
+    <tbody>
+      <tr><th>Characters of training text</th><td>342,855</td><td>3,717,525</td></tr>
+      <tr><th>Loss on withheld text</th><td>2.494</td><td>1.698</td></tr>
+      <tr><th>Loss on training text</th><td>2.113</td><td>1.669</td></tr>
+      <tr><th>Counting model, withheld text</th><td>2.876</td><td>1.962</td></tr>
+      <tr><th>Uniform distribution</th><td>4.954</td><td>5.977</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Both models improve upon the counting model, TorahGPT by 0.38 bits per character and KJVGPT by 0.26. The principal difference between them lies in the gap between their losses on training and on withheld text. TorahGPT predicts the text on which it was trained better by 0.38 bits per character, an indication that it has memorized part of its comparatively small corpus; for KJVGPT, trained on more than ten times as much text, the gap is 0.03. Losses are not comparable between the two languages, since a character of unvocalized Hebrew carries more information than a character of English.</p>
+
+  <h2>Generation</h2>
+  <p>To write, a model computes the probabilities of the next character, one character is drawn at random according to them and appended to the text, and the process is repeated. The temperature divides the scores before they are converted into probabilities: values below one favor the most probable characters, and values above one give improbable characters a greater chance. The settings offered range from 0.5 to 1.3. A passage continues until the chosen number of characters has been written and the current verse is complete, and it is displayed one word at a time, so that each word can be examined for divine names before it is shown.</p>
+  <p>The three lengths offered, 248, 365, and 613 characters, are the traditional counts of the positive commandments, the negative commandments, and all the commandments of the Torah. The Talmud (Makkot 23b) relates the 365 prohibitions to the days of the solar year and the 248 positive commandments to the limbs of the human body.</p>
 
   <h2>Translation</h2>
-  <p>
-    TorahGPT's English comes from the free MyMemory translation service. English you type into TorahGPT,
-    and the Hebrew it writes, is sent to MyMemory to be translated; nothing else leaves your browser.
-    Machine translation tends to smooth nonsense into fluent-sounding English, so the Hebrew is always
-    the more honest of the two.
-  </p>
+  <p>English typed into TorahGPT is translated into Hebrew before it is given to the model, and each verse the model writes is translated into English once it is complete. Both translations are provided by the free MyMemory service, to which the English typed by the reader and the Hebrew written by the model are sent; nothing else leaves the browser. Machine translation tends to render invented words and ungrammatical sequences as fluent English, and the Hebrew should be regarded as the authoritative text.</p>
 
-  <h2>The design</h2>
-  <p>
-    TorahGPT writes in Frank Ruhl Libre, a revival of a Hebrew book face from 1908, and KJVGPT in
-    <span class="kjv">IM Fell English</span>, a revival of 17th-century English printing types; everything
-    else is set in STIX Two Text.
-    The large <span class="he">ב</span> on TorahGPT's opening screen echoes the enlarged letter that
-    traditionally begins a Torah scroll.
-  </p>
+  <h2>Relation to earlier work</h2>
+  <p>Shannon (1951) estimated the information content of English by asking readers to predict text one letter at a time, obtaining between about 0.6 and 1.3 bits per character; the losses above are the corresponding quantity for these models. Character-level language models trained on a single small text were popularized by Karpathy’s char-rnn (2015); the design used here follows the character-level example of his later nanoGPT, with a transformer in place of a recurrent network. The counting of the letters of the Torah is considerably older: the Talmud (Kiddushin 30a) records that the early scribes were called <i>soferim</i>, “counters,” because they counted the letters of the Torah.</p>
 
-  <h2>Code</h2>
-  <p>
-    Everything, from preparing the texts to training the models, is
-    <a href="https://github.com/Kabbalahblah/TorahGPT">on GitHub</a>.
-  </p>
+  <h2>Limitations</h2>
+  <ul>
+    <li>The models produce no meaning. They have learned which characters tend to follow which, and nothing of what the texts say.</li>
+    <li>A model takes account of only the preceding 128 characters, about two verses of the Torah or one of the King James Version.</li>
+    <li>TorahGPT has memorized part of its training text, as the gap between its losses on training and on withheld text shows.</li>
+    <li>In the King James Version, 17.5 percent of the withheld text lies within stretches of thirty characters that also occur in the training text, owing to its formulas and parallel passages, so KJVGPT’s loss on withheld text overstates its capacity to generalize.</li>
+    <li>The page’s own check recognizes only the divine names that cannot be mistaken for ordinary words; the others are excluded by the training text alone.</li>
+    <li>The translations are those of a general-purpose service, which is ill suited to biblical Hebrew.</li>
+    <li>The models run in the browser, which must first download about seven megabytes.</li>
+  </ul>
+
+  <footer class="foot">
+    <p>Sigfrido D. Ciletti, 2026. The source code is on <a href="https://github.com/Kabbalahblah/TorahGPT">GitHub</a>. Further work at <a href="https://ciletti.xyz">ciletti.xyz</a>.</p>
+  </footer>
 </main>
 
 </body>
